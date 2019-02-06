@@ -42,7 +42,11 @@
         }
 
         function getStartTime() {
-            let startTime = moment().startOf('day');
+            let startTime = moment();
+            startTime.hours(3);
+            startTime.minutes(50);
+            startTime.seconds(0);
+            startTime.milliseconds(0);
 
             let search = window.location.search || '';
             search = search.replace(/\?/g, '');
@@ -63,14 +67,9 @@
             return startTime;
         }
 
-        let startTimeEl = document.getElementById('startTime');
         let counterElement = document.getElementById('counter');
 
         startTime = getStartTime();
-
-        startTimeEl.addEventListener('change', function () {
-            console.log(startTimeEl.value);
-        });
 
         function render() {
             let now = moment();

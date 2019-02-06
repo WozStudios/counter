@@ -18,18 +18,9 @@
             background: #232323;
             color: #efead2;
           }
-
-        input {
-            padding: 4px;
-            border: none;
-            color: #232323;
-            background: #e9e7df;
-            margin-bottom: 2rem;
-        }
       </style>
 </head>
 <body>
-    <input type="text" id="startTime">
     <div id="counter"></div>
 
     <script>
@@ -51,11 +42,7 @@
         }
 
         function getStartTime() {
-            let startTime = moment();
-            startTime.hours(3);
-            startTime.minutes(50);
-            startTime.seconds(0);
-            startTime.milliseconds(0);
+            let startTime = moment().startOf('day');
 
             let search = window.location.search || '';
             search = search.replace(/\?/g, '');

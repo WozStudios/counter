@@ -6,10 +6,10 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width">
     <title>Counter</title>
-    <link href="https://fonts.googleapis.com/css?family=Lato" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Lato:400,700" rel="stylesheet">
     <style>
         body {
-            font-family: 'Lato', arial, sans-serif;
+            font-family: 'Open Sans', 'Lato', arial, sans-serif;
             text-align: center;
             font-size: 100px;
             padding-top: 20vh;
@@ -17,67 +17,132 @@
             justify-content: center;
             background: #232323;
             color: #efead2;
-          }
+            font-weight: 500;
+        }
+        #reset {
+            border: none;
+            background: #232323;
+            color: #efead2;
+            color: #d9ffe0;
+            font-size: 14px;
+            text-transform: uppercase;
+            font-weight: 700;
+            letter-spacing: 1px;
+            opacity: 0.4;
+            transition: all 0.1 s ease;
+            cursor: pointer;
+            margin-top: 1rem;
+        }
+        #reset:hover {
+            opacity: 1;
+        }
+
+
       </style>
 </head>
 <body>
     <div id="counter"></div>
+    <div id="reset">Reset</button>
 
     <script>
-        function parseTime(time = '') {
-            try {
-                let parts = time.split(':');
+        Array.prototype.first = function () {
+            return this.length ? this[0] : null;
+        };
 
+        function saveStartTime(startTime) {
+            startTime = startTime || moment();
+
+            let parts = [];
+
+            const formatQueryParam = (key, value) => `${key}=${value}`;
+
+            parts.push(formatQueryParam('M', startTime.months()));
+            parts.push(formatQueryParam('D', startTime.date()));
+            parts.push(formatQueryParam('h', startTime.hours()));
+            parts.push(formatQueryParam('m', startTime.minutes()));
+            parts.push(formatQueryParam('s', startTime.seconds()));
+
+            let search = parts.join('&');
+            let url = `${window.location.pathname}?${search}`
+            console.log('search', search);
+            console.log('url', url);
+            window.history.pushState(null, null, url);
+        }
+
+        function setTimePart(startTime, settings = [], key = '') {
+            let setting = settings.filter(s => s.key.startsWith(key)).first();
+            if (setting) {
+                console.log('setTimePart', key, setting.value);
+                startTime.set(key, setting.value);
+            }
+        }
+            
+        function parseTime(settings = []) {
+            try {
+                console.log('parseTime', settings);
                 let startTime = moment();
-                startTime.hours(parts[0]);
-                startTime.minutes(parts[1]);
-                startTime.seconds(0);
                 startTime.milliseconds(0);
+                if (settings.length) {
+                    startTime.seconds(0);
+                }
+
+                settings.forEach(s => setTimePart(startTime, settings, s.key));
+
                 return startTime;
 
-            } catch (e) {
-                console.error(`invalid time input: ${time}`);
+            } catch (err) {
+                console.error(`error parsing settings: `, err);
                 return null;
             }
         }
 
         function getStartTime() {
-            let startTime = moment();
-            startTime.hours(3);
-            startTime.minutes(50);
-            startTime.seconds(0);
-            startTime.milliseconds(0);
-
             let search = window.location.search || '';
             search = search.replace(/\?/g, '');
-            let times = search.split('&')
+            
+            let settings = search.split('&')
                 .map(p => p.split('='))
-                .map(p => ({key: p[0], value: p[1]}))
-                .filter(p => p.key === 'time')
-                .map(p => p.value);
+                .filter(p => p.length >= 2)
+                .map(p => ({key: p[0], value: p[1]}));
 
-            if (times.length) {
-                let time = parseTime(times[0]);
-                startTime = time || startTime;
-                console.log('found time', !!time, times[0], time);
-            } else {
-                console.log('no time found', search);
-            }
+            let startTime = parseTime(settings);
 
+            console.log('startTime', startTime.toString(), startTime);
             return startTime;
         }
 
-        let counterElement = document.getElementById('counter');
+        function initStartTime() {
+            startTime = getStartTime();
+            saveStartTime(startTime);
+        }
 
-        startTime = getStartTime();
+        function reset() {
+            startTime = moment();
+            saveStartTime(startTime);
+        }
+
+        function format(n) {
+            return n < 10 ? `0${n}` : n;
+        }
 
         function render() {
             let now = moment();
             now.milliseconds(0);
-            let time = moment(now - startTime);
-            counterElement.innerHTML = time.format("HH:mm:ss");
+            let time = moment.duration(now - startTime);
+            let hours = format(time.hours());
+            let minutes = format(time.minutes());
+            let seconds = format(time.seconds());
+
+            counterElement.innerHTML = `${hours}:${minutes}:${seconds}`;
             window.requestAnimationFrame(render);
         }
+
+        let counterElement = document.getElementById('counter');
+
+        let resetButton = document.getElementById('reset');
+        resetButton.addEventListener('click', () => reset());
+
+        initStartTime();
 
         window.requestAnimationFrame(render);
     </script>
